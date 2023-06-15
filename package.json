@@ -18,6 +18,7 @@
   "scripts": {
     "prepare": "sh scripts/prepare.sh",
     "build": "parcel build",
+    "compile": "hardhat compile && hardhat typechain",
     "test": "hardhat test"
   },
   "devDependencies": {

@@ -16,7 +16,7 @@ A simple implementation of the ZKTree contract looks like this (from the [zktree
 
 ```
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.19;
 
 import "zk-merkle-tree/contracts/ZKTree.sol";
 

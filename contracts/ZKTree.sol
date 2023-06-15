@@ -1,65 +1,52 @@
 // based on https://github.com/tornadocash/tornado-core/blob/master/contracts/Tornado.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.19;
 
 import "./MerkleTreeWithHistory.sol";
 
 interface IVerifier {
-    function verifyProof(
-        uint[2] memory a,
-        uint[2][2] memory b,
-        uint[2] memory c,
-        uint[2] memory input
-    ) external pure returns (bool r);
+    function verifyProof(uint256[2] memory a, uint256[2][2] memory b, uint256[2] memory c, uint256[2] memory input)
+        external
+        pure
+        returns (bool r);
 }
 
 contract ZKTree is MerkleTreeWithHistory {
-    mapping(bytes32 => bool) public nullifiers;
-    mapping(bytes32 => bool) public commitments;
+    error CommitmentExists(bytes32 commitment);
+    error NullifierAlreadySubmitted(bytes32 nullifier);
+    error WrongMerkleRoot(bytes32 root);
+    error InvalidProof();
 
-    IVerifier public immutable verifier;
+    mapping(bytes32 => bool) public s_nullifiers;
+    mapping(bytes32 => bool) public s_commitments;
 
-    event Commit(
-        bytes32 indexed commitment,
-        uint32 leafIndex,
-        uint256 timestamp
-    );
+    IVerifier public immutable i_verifier;
 
-    constructor(
-        uint32 _levels,
-        IHasher _hasher,
-        IVerifier _verifier
-    ) MerkleTreeWithHistory(_levels, _hasher) {
-        verifier = _verifier;
+    event Commit(bytes32 indexed commitment, uint32 leafIndex, uint256 timestamp);
+
+    constructor(uint32 levels, IHasher hasher, IVerifier verifier) MerkleTreeWithHistory(levels, hasher) {
+        i_verifier = verifier;
     }
 
-    function _commit(bytes32 _commitment) internal {
-        require(!commitments[_commitment], "The commitment has been submitted");
+    function _commit(bytes32 commitment) internal {
+        if (s_commitments[commitment]) revert CommitmentExists(commitment);
 
-        commitments[_commitment] = true;
-        uint32 insertedIndex = _insert(_commitment);
-        emit Commit(_commitment, insertedIndex, block.timestamp);
+        s_commitments[commitment] = true;
+        uint32 insertedIndex = _insert(commitment);
+        emit Commit(commitment, insertedIndex, block.timestamp);
     }
 
     function _nullify(
-        bytes32 _nullifier,
-        bytes32 _root,
-        uint[2] memory _proof_a,
-        uint[2][2] memory _proof_b,
-        uint[2] memory _proof_c
+        bytes32 nullifier,
+        bytes32 root,
+        uint256[2] memory proofA,
+        uint256[2][2] memory proofB,
+        uint256[2] memory proofC
     ) internal {
-        require(!nullifiers[_nullifier], "The nullifier has been submitted");
-        require(isKnownRoot(_root), "Cannot find your merkle root");
-        require(
-            verifier.verifyProof(
-                _proof_a,
-                _proof_b,
-                _proof_c,
-                [uint256(_nullifier), uint256(_root)]
-            ),
-            "Invalid proof"
-        );
+        if (s_nullifiers[nullifier]) revert NullifierAlreadySubmitted(nullifier);
+        if (!isKnownRoot(root)) revert WrongMerkleRoot(root);
+        if (!i_verifier.verifyProof(proofA, proofB, proofC, [uint256(nullifier), uint256(root)])) revert InvalidProof();
 
-        nullifiers[_nullifier] = true;        
+        s_nullifiers[nullifier] = true;
     }
 }
