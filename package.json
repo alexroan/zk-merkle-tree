@@ -17,7 +17,8 @@
   "types": "dist/types.d.ts",
   "scripts": {
     "prepare": "sh scripts/prepare.sh",
-    "build": "parcel build"
+    "build": "parcel build",
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
