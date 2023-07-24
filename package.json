@@ -1,8 +1,8 @@
 {
   "name": "zk-merkle-tree",
-  "version": "1.0.4",
-  "repository": "https://github.com/TheBojda/zk-merkle-tree.git",
-  "author": "Laszlo Fazekas <thebojda@gmail.com>",
+  "version": "0.0.1",
+  "repository": "https://github.com/alexroan/zk-merkle-tree.git",
+  "author": "Alex Roan <alex@cyfrin.io>",
   "license": "MIT",
   "description": "JavaScript library for anonymous voting on Ethereum blockchain using zero-knowledge proof",
   "keywords": [
