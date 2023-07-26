@@ -1,25 +1,42 @@
 use dep::std;
 
-// This currently mimics the CommitmentHasher
+////////////////
+// HashLeftRight
+////////////////
+fn hash_left_right(left : [u8; 32], right : [u8; 32]) -> [u8; 32] {
+    let input: [u8; 64] = [
+        left[0], left[1], left[2], left[3], left[4], left[5], left[6], left[7],
+        left[8], left[9], left[10], left[11], left[12], left[13], left[14], left[15],
+        left[16], left[17], left[18], left[19], left[20], left[21], left[22], left[23],
+        left[24], left[25], left[26], left[27], left[28], left[29], left[30], left[31],
+        right[0], right[1], right[2], right[3], right[4], right[5], right[6], right[7],
+        right[8], right[9], right[10], right[11], right[12], right[13], right[14], right[15],
+        right[16], right[17], right[18], right[19], right[20], right[21], right[22], right[23],
+        right[24], right[25], right[26], right[27], right[28], right[29], right[30], right[31]
+    ];
+    let output = std::hash::sha256(input);
+    output
+}
 
+#[test]
+fn test_has_left_right() {
+    let left = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+    let right = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+    let expected_output = [0xd6, 0xba, 0x93, 0x29, 0xf8, 0x93, 0x2c, 0x12, 0x19, 0x2b, 0x37, 0x84, 0x9f, 0x77, 0x21, 0x04, 0xd2, 0x, 0x48, 0xf7, 0x64, 0x34, 0xa3, 0x29, 0x05, 0x12, 0xd9, 0xd8, 0x14, 0xe4, 0x11, 0x6f];
+    let output = hash_left_right(left, right);
+    assert(output == expected_output);
+}
+
+///////////////////
+// CommitmentHasher
+///////////////////
 struct Commitment {
     commitment_hash: [u8; 32],
     nullifier_hash: [u8; 32]
 }
 
 fn hash_commitment(nullifier : [u8; 32], secret : [u8; 32]) -> pub Commitment {
-    let commitment_input: [u8; 64] = [
-        nullifier[0], nullifier[1], nullifier[2], nullifier[3], nullifier[4], nullifier[5], nullifier[6], nullifier[7],
-        nullifier[8], nullifier[9], nullifier[10], nullifier[11], nullifier[12], nullifier[13], nullifier[14], nullifier[15],
-        nullifier[16], nullifier[17], nullifier[18], nullifier[19], nullifier[20], nullifier[21], nullifier[22], nullifier[23],
-        nullifier[24], nullifier[25], nullifier[26], nullifier[27], nullifier[28], nullifier[29], nullifier[30], nullifier[31],
-        secret[0], secret[1], secret[2], secret[3], secret[4], secret[5], secret[6], secret[7],
-        secret[8], secret[9], secret[10], secret[11], secret[12], secret[13], secret[14], secret[15],
-        secret[16], secret[17], secret[18], secret[19], secret[20], secret[21], secret[22], secret[23],
-        secret[24], secret[25], secret[26], secret[27], secret[28], secret[29], secret[30], secret[31]
-    ];
-    let commitment_hash = std::hash::sha256(commitment_input);
-    std::println(commitment_hash);
+    let commitment_hash = hash_left_right(nullifier, secret);
     let nullifier_hash = std::hash::sha256(nullifier);
 
     Commitment {
@@ -40,6 +57,10 @@ fn test_hash_commitment() {
     let expected_nullifier_hash = std::hash::sha256(nullifier);
     assert(commitment.nullifier_hash == expected_nullifier_hash);
 }
+
+//////////////////////////
+// Compute the Merkle Root
+//////////////////////////
 
 fn main(i_0: [u8; 32], i_1: [u8; 32]){
     let input : [u8; 64] = [
